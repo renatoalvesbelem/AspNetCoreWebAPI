@@ -10,53 +10,66 @@ namespace Smartschool.WebApi.Controllers
     [Route("/api/[controller]")]
     public class AlunoController : ControllerBase
     {
-        private readonly SmartContext _context;
-
-        public AlunoController(SmartContext context)
+        private readonly IRepository _repo;
+        public AlunoController(IRepository repo)
         {
-            _context = context;
+            _repo = repo;
+        }
+
+        [HttpGet("pegaResposta")]
+        public IActionResult pegaResposta()
+        {
+            return Ok(_repo.pegaResposta());
         }
 
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok(_context.Alunos);
+            return Ok(_repo.GetAllAlunos(true));
         }
 
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
-            var aluno = _context.Alunos.FirstOrDefault(a => a.Id == id);
+            var aluno = _repo.GetAlunoById(id, true);
+
             return Ok(aluno);
         }
+
+        [HttpGet("byDisciplina")]
+        public IActionResult GetByDisciplina(int disciplinaId)
+        {
+            var aluno = _repo.GetAllAlunosByDisciplinaId(disciplinaId, false);
+            return Ok(aluno);
+        }
+
 
         [HttpPost]
         public IActionResult Post(Aluno aluno)
         {
-            _context.Alunos.Add(aluno);
-            _context.SaveChanges();
-            return Ok(_context.Alunos);
+            _repo.Add(aluno);
+            _repo.SaveChanges();
+            return Ok(_repo.GetAllAlunos());
         }
 
         [HttpDelete("{id}")]
         public IActionResult Delele(int id)
         {
-            var aluno = _context.Alunos.FirstOrDefault(a => a.Id == id);
+            var aluno = _repo.GetAlunoById(id);
             if (aluno == null)
             {
                 return BadRequest("Não foi possível encontrar o usuário");
             }
-            _context.Alunos.Remove(aluno);
-            _context.SaveChanges();
-            return Ok(_context.Alunos);
+            _repo.Delete(aluno);
+            _repo.SaveChanges();
+            return Ok(_repo.GetAllAlunos());
         }
 
         [HttpPut]
         public IActionResult Update(Aluno aluno)
         {
-            _context.Alunos.Update(aluno);
-            return Ok(_context.Alunos);
+            _repo.Update(aluno);
+            return Ok(_repo.GetAllAlunos());
         }
-
     }
 }

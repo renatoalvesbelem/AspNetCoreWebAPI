@@ -10,52 +10,59 @@ namespace Smartschool.WebApi.Controllers
     [Route("/api/[controller]")]
     public class ProfessorController : ControllerBase
     {
-        private readonly SmartContext _context;
+        private readonly IRepository _repo;
 
-        public ProfessorController(SmartContext context)
+        public ProfessorController(SmartContext context, IRepository repo)
         {
-            _context = context;
+            _repo = repo;
         }
 
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok(_context.Professores);
+            return Ok(_repo.GetAllProfessores(true));
         }
 
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
-            var professor = _context.Professores.FirstOrDefault(a => a.Id == id);
-            return Ok(professor);
+            return Ok(_repo.GetProfessoreById(id, true));
+        }
+
+
+        [HttpGet("byDisciplina")]
+
+        public IActionResult GetByDisciplinaId(int disciplinaId)
+        {
+            return Ok(_repo.GetAllProfessoresByDisciplinaId(disciplinaId, true));
         }
 
         [HttpPost]
         public IActionResult Post(Professor professor)
         {
-            _context.Professores.Add(professor);
-            _context.SaveChanges();
-            return Ok(_context.Professores);
+            _repo.Add(professor);
+            _repo.SaveChanges();
+            return Ok(_repo.GetAllProfessores());
         }
 
         [HttpDelete("{id}")]
         public IActionResult Delele(int id)
         {
-            var professor = _context.Professores.FirstOrDefault(a => a.Id == id);
+            var professor = _repo.GetProfessoreById(id);
             if (professor == null)
             {
                 return BadRequest("Não foi possível encontrar o usuário");
             }
-            _context.Professores.Remove(professor);
-            _context.SaveChanges();
-            return Ok(_context.Professores);
+            _repo.Delete(professor);
+            _repo.SaveChanges();
+            return Ok(_repo.GetAllProfessores());
         }
 
         [HttpPut]
         public IActionResult Update(Professor professor)
         {
-            _context.Professores.Update(professor);
-            return Ok(_context.Professores);
+            _repo.Update(professor);
+            return Ok(_repo.GetAllProfessores());
         }
 
     }
