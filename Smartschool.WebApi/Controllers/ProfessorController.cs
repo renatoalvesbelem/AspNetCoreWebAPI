@@ -1,7 +1,10 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Smartschool.WebApi.Data;
+using Smartschool.WebApi.Dtos;
 using Smartschool.WebApi.Models;
 
 namespace Smartschool.WebApi.Controllers
@@ -11,38 +14,54 @@ namespace Smartschool.WebApi.Controllers
     public class ProfessorController : ControllerBase
     {
         private readonly IRepository _repo;
-
-        public ProfessorController(SmartContext context, IRepository repo)
+        private readonly IMapper _mapper;
+        public ProfessorController(IRepository repo, IMapper mapper)
         {
             _repo = repo;
+            _mapper = mapper;
+        }
+
+        [HttpGet("getRegister")]
+        public IActionResult GetRegister()
+        {
+            return Ok(new ProfessorRegistroDto());
         }
 
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok(_repo.GetAllProfessores(true));
+            var professores = _repo.GetAllProfessores(true);
+            var professorDto = _mapper.Map<IEnumerable<ProfessorDto>>(professores);
+            return Ok(professorDto);
         }
 
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
-            return Ok(_repo.GetProfessoreById(id, true));
+            var professor = _repo.GetProfessoreById(id, true);
+            var professorDto = _mapper.Map<ProfessorDto>(professor);
+            return Ok(professorDto);
         }
 
 
         [HttpGet("byDisciplina")]
-
         public IActionResult GetByDisciplinaId(int disciplinaId)
         {
-            return Ok(_repo.GetAllProfessoresByDisciplinaId(disciplinaId, true));
+            var professores = _repo.GetAllProfessoresByDisciplinaId(disciplinaId, true);
+            var professoresDto = _mapper.Map<IEnumerable<ProfessorDto>>(professores);
+            return Ok(professoresDto);
         }
 
         [HttpPost]
-        public IActionResult Post(Professor professor)
+        public IActionResult Post(ProfessorRegistroDto model)
         {
+            var professor = _mapper.Map<Professor>(model);
             _repo.Add(professor);
-            _repo.SaveChanges();
-            return Ok(_repo.GetAllProfessores());
+            if (_repo.SaveChanges())
+            {
+                return Created($"api/professor/{professor.Id}", _mapper.Map<ProfessorDto>(professor));
+            }
+            return BadRequest("Não foi possível cadastrar o professor");
         }
 
         [HttpDelete("{id}")]
@@ -55,14 +74,20 @@ namespace Smartschool.WebApi.Controllers
             }
             _repo.Delete(professor);
             _repo.SaveChanges();
-            return Ok(_repo.GetAllProfessores());
+            var professores = _repo.GetAllProfessores();
+            return Ok(_mapper.Map<IEnumerable<ProfessorDto>>(professores));
         }
 
         [HttpPut]
-        public IActionResult Update(Professor professor)
+        public IActionResult Update(ProfessorRegistroDto model)
         {
+            var professor = _mapper.Map<Professor>(model);
             _repo.Update(professor);
-            return Ok(_repo.GetAllProfessores());
+            if (_repo.SaveChanges())
+            {
+                return Created($"api/professor/{professor.Id}", _mapper.Map<ProfessorDto>(professor));
+            }
+            return BadRequest("Não foi possível atualizar o professor");
         }
 
     }
